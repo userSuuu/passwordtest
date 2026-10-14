@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在线密码强度安全检测</title>
+<style>
+*{
+  box-sizing: border-box;
+  font-family: system-ui, monospace;
+}
+body{
+  background:#0f172a;
+  color:#e2e8f0;
+  max-width:620px;
+  margin:40px auto;
+  padding:0 20px;
+}
+.card{
+  background:#1e293b;
+  padding:32px;
+  border-radius:16px;
+  box-shadow: 0 0 18px #33415566;
+}
+.page{
+  display:none;
+}
+.page.active{
+  display:block;
+}
+h2{
+  color:#cbd5e1;
+  margin-top:0;
+}
+.input-wrap{
+  margin:20px 0;
+}
+input[type="password"]{
+  width:100%;
+  padding:14px;
+  border-radius:8px;
+  border:1px solid #475569;
+  background:#0f172a;
+  color:#fff;
+  font-size:16px;
+}
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  cursor:pointer;
+  background:#2563eb;
+  color:#fff;
+  transition:0.2s;
+}
+button:hover{
+  background:#1d4ed8;
+}
+.log-box{
+  background:#020617;
+  padding:16px;
+  border-radius:8px;
+  text-align:left;
+  height:220px;
+  overflow-y:auto;
+  font-size:14px;
+  color:#86efac;
+  margin:20px 0;
+}
+.progress-bar{
+  width:100%;
+  height:16px;
+  background:#334155;
+  border-radius:99px;
+  overflow:hidden;
+  margin:10px 0 24px;
+}
+.progress{
+  height:100%;
+  width:0%;
+  background:#3b82f6;
+  transition: width 0.06s linear;
+}
+.result-text{
+  font-size:20px;
+  line-height:1.7;
+}
+.warn{
+  color:#fbbf24;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- 首页：输入密码 -->
+  <div class="page active" data-page="input">
+    <h2>🔐 在线密码强度安全检测</h2>
+    <p>输入密码，系统自动评估密码熵值、抵抗字典破解能力，给出安全评级</p>
+    <div class="input-wrap">
+      <input id="pwdInput" type="password" placeholder="在此输入待检测密码">
+    </div>
+    <button onclick="startScan()">开始安全分析</button>
+    <p style="font-size:13px;color:#94a3b8;margin-top:12px;">提示：本工具仅本地运算，不会上传你的密码</p>
+  </div>
+
+  <!-- 扫描分析页面 -->
+  <div class="page" data-page="scan">
+    <h2>正在进行安全扫描</h2>
+    <div class="progress-bar">
+      <div class="progress" id="bar"></div>
+    </div>
+    <div class="log-box" id="log"></div>
+  </div>
+
+  <!-- 最终结果页 -->
+  <div class="page" data-page="result">
+    <h2>✅ 安全检测完成</h2>
+    <div class="result-text">
+      <p>密码安全评估：</p>
+      <p class="warn">你的密码本身风险未知，但<br/><strong>最大安全漏洞：你敢在陌生网站输入密码！</strong></p>
+    </div>
+    <button onclick="restart()">重新检测</button>
+  </div>
+</div>
+
+<script>
+const logTexts = [
+  "> 初始化密码分析引擎...",
+  "> 开始计算信息熵",
+  "> 载入弱密码字典库",
+  "> 比对常见爆破口令",
+  "> 分析字符种类：大小写、数字、符号",
+  "> 检测是否包含生日、手机号特征",
+  "> 模拟暴力破解耗时估算",
+  "> 交叉校验彩虹表数据库",
+  "> 综合风险评分计算中...",
+  "> 评估完成，生成最终报告"
+];
+
+function startScan(){
+  const pwd = document.getElementById("pwdInput").value;
+  // 只是读取，不会发送、不会存储密码
+  if(!pwd){
+    alert("请先输入密码！");
+    return;
+  }
+
+  // 切换页面
+  document.querySelector('.page[data-page="input"]').classList.remove("active");
+  document.querySelector('.page[data-page="scan"]').classList.add("active");
+
+  const logDom = document.getElementById("log");
+  const bar = document.getElementById("bar");
+  logDom.innerText = "";
+  let logIdx = 0;
+  let width = 0;
+
+  // 输出日志
+  const logTimer = setInterval(()=>{
+    if(logIdx < logTexts.length){
+      logDom.innerText += logTexts[logIdx] + "\n";
+      logDom.scrollTop = logDom.scrollHeight;
+      logIdx++;
+    }
+  }, 650);
+
+  // 进度条
+  const progressTimer = setInterval(()=>{
+    width += 1.4;
+    bar.style.width = width + "%";
+    if(width >=100){
+      clearInterval(progressTimer);
+      clearInterval(logTimer);
+      setTimeout(()=>{
+        document.querySelector('.page[data-page="scan"]').classList.remove("active");
+        document.querySelector('.page[data-page="result"]').classList.add("active");
+      },800);
+    }
+  },60);
+}
+
+function restart(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.page[data-page="input"]').classList.add("active");
+  document.getElementById("pwdInput").value = "";
+  document.getElementById("bar").style.width = "0%";
+  document.getElementById("log").innerText = "";
+}
+</script>
+</body>
+</html>
